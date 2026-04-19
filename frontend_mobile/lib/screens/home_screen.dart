@@ -17,13 +17,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Timer _timer;
-  Duration _timeLeft = const Duration(hours: 45, minutes: 12, seconds: 0);
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Refresh user and candidates to check voting status
     Future.microtask(() {
       Provider.of<VotingProvider>(context, listen: false).fetchCandidates();
     });
@@ -31,13 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_timeLeft.inSeconds > 0) {
-        setState(() {
-          _timeLeft = _timeLeft - const Duration(seconds: 1);
-        });
-      } else {
-        _timer.cancel();
-      }
+      if (mounted) setState(() {});
     });
   }
 
@@ -58,7 +50,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final voting = Provider.of<VotingProvider>(context);
     final user = auth.user;
+
+    // Compute countdown from Firestore endTime
+    Duration? timeLeft;
+    if (voting.endTime != null && voting.endTime!.isNotEmpty) {
+      try {
+        final endDt = DateTime.parse(voting.endTime!);
+        final diff = endDt.difference(DateTime.now());
+        timeLeft = diff.isNegative ? Duration.zero : diff;
+      } catch (_) {}
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -110,10 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildInstitutionalTicker(),
                     const SizedBox(height: 24),
                     // Timer Card
-                    _buildTimerCard(),
+                    _buildTimerCard(timeLeft),
                     const SizedBox(height: 48),
                     // Main Vote Action
-                    _buildVoteButton(context, user?.hasVoted ?? false),
+                    _buildVoteButton(context, user?.hasVoted ?? false, voting.isVotingOpen),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -295,7 +298,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTimerCard() {
+  Widget _buildTimerCard(Duration? timeLeft) {
+    final hasTime = timeLeft != null;
+    String days    = hasTime ? timeLeft.inDays.toString().padLeft(2, '0') : '--';
+    String hours   = hasTime ? (timeLeft.inHours % 24).toString().padLeft(2, '0') : '--';
+    String minutes = hasTime ? (timeLeft.inMinutes % 60).toString().padLeft(2, '0') : '--';
+    String seconds = hasTime ? (timeLeft.inSeconds % 60).toString().padLeft(2, '0') : '--';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -325,13 +334,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTimeUnit(_timeLeft.inDays.toString().padLeft(2, '0'), "DAYS"),
+              _buildTimeUnit(days, "DAYS"),
               _buildTimeDivider(),
-              _buildTimeUnit(_timeLeft.inHours.remainder(24).toString().padLeft(2, '0'), "HOURS"),
+              _buildTimeUnit(hours, "HOURS"),
               _buildTimeDivider(),
-              _buildTimeUnit(_timeLeft.inMinutes.remainder(60).toString().padLeft(2, '0'), "MINS"),
+              _buildTimeUnit(minutes, "MINS"),
               _buildTimeDivider(),
-              _buildTimeUnit(_timeLeft.inSeconds.remainder(60).toString().padLeft(2, '0'), "SECS"),
+              _buildTimeUnit(seconds, "SECS"),
             ],
           ),
         ],
@@ -371,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildVoteButton(BuildContext context, bool hasVoted) {
+  Widget _buildVoteButton(BuildContext context, bool hasVoted, bool isVotingOpen) {
     if (hasVoted) {
       return Container(
         width: double.infinity,
@@ -440,6 +449,77 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    // ── VOTING SUSPENDED state ──
+    if (!isVotingOpen) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFEF4444).withOpacity(0.05),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.lock_rounded, color: Color(0xFFEF4444), size: 64),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "VOTING SUSPENDED",
+              style: GoogleFonts.inter(
+                color: AppConstants.navy,
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                "PAUSED BY ADMINISTRATION",
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFEF4444),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "The election has been temporarily paused by the administration. Please wait for the election to resume.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: AppConstants.textSlate,
+                fontSize: 13,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── ACTIVE VOTE BUTTON ──
     return Column(
       children: [
         GestureDetector(
@@ -466,7 +546,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Animated rings placeholder (Design logic)
                 Container(
                   width: 180,
                   height: 180,
