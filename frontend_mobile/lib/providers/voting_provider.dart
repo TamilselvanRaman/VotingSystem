@@ -100,10 +100,32 @@ class VotingProvider with ChangeNotifier {
     try {
       // 1. Direct Update of User Document (Crucial for Lockout)
       final userRef = _db.collection('users').doc(userId);
+      final userDoc = await userRef.get();
       await userRef.update({'hasVoted': true});
       debugPrint("User database record LOCKED for ID: $userId");
 
-      // 2. Transaction for Count and Vote Record
+      // 2. Sync hasVoted to realVoterList so admin panel updates in real-time
+      if (userDoc.exists) {
+        final epicNumber = userDoc.data()?['epicNumber'] ?? userDoc.data()?['voterId'];
+        if (epicNumber != null) {
+          try {
+            final masterQuery = await _db.collection('realVoterList')
+                .where('epicNumber', isEqualTo: epicNumber.toString().toUpperCase().trim())
+                .get();
+            for (final doc in masterQuery.docs) {
+              await doc.reference.update({
+                'hasVoted': true,
+                'votedAt': FieldValue.serverTimestamp(),
+              });
+            }
+            debugPrint("Admin panel synced: realVoterList updated for EPIC: $epicNumber");
+          } catch (e) {
+            debugPrint("Admin sync warning (non-critical): $e");
+          }
+        }
+      }
+
+      // 3. Transaction for Count and Vote Record
       await _db.runTransaction((transaction) async {
         final candidateRef = _db.collection('candidates').doc(candidateId);
         

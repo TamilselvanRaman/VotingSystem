@@ -3,6 +3,16 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  NEXT_PUBLIC_FIREBASE_API_KEY = "AIzaSyABpZYtDtkSp0HumtPA0F6-p9HL1cXnmK4"
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = "votingsystem2026-3cf4c.firebaseapp.com"
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID = "votingsystem2026-3cf4c"
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = "votingsystem2026-3cf4c.firebasestorage.app"
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = "823467953736"
+  NEXT_PUBLIC_FIREBASE_APP_ID = "1:823467953736:web:dashboard_manual_id"
+  NEXT_PUBLIC_ADMIN_EMAIL = "admin@smartvote.gov"
+  NEXT_PUBLIC_SECURITY_PASSPHRASE = "As@12345"
+
 [[redirects]]
   from = "/"
   to = "/dashboard"
