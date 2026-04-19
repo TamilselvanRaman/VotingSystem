@@ -16,6 +16,7 @@ class VotingScreen extends StatefulWidget {
 
 class _VotingScreenState extends State<VotingScreen> {
   String? _selectedCandidateId;
+  bool _isSuccessNavigating = false;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _VotingScreenState extends State<VotingScreen> {
         .submitVote(_selectedCandidateId!, userId);
 
     if (success && mounted) {
+      _isSuccessNavigating = true;
       // LOCK the local state immediately
       auth.markAsVotedLocally();
 
@@ -69,7 +71,7 @@ class _VotingScreenState extends State<VotingScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     // Security Shield: If user has already voted, push them back
-    if (auth.user?.hasVoted == true) {
+    if (auth.user?.hasVoted == true && !_isSuccessNavigating) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context);
       });
