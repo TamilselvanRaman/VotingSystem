@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "823467953736",
+    "project_id": "votingsystem2026-3cf4c",
+    "storage_bucket": "votingsystem2026-3cf4c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823467953736:android:533dde7b69e340517b127d",
+        "android_client_info": {
+          "package_name": "com.ksrce.votingsystem2026"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABpZYtDtkSp0HumtPA0F6-p9HL1cXnmK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,11 @@
+# Root files
+node_modules/
+.env
+*.env
+*.env.*
+users.json
+*firebase-adminsdk*.json
+
+# Ignore Mac OS / Windows files
+.DS_Store
+Thumbs.db
