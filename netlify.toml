@@ -13,7 +13,11 @@
   NEXT_PUBLIC_ADMIN_EMAIL = "admin@smartvote.gov"
   NEXT_PUBLIC_SECURITY_PASSPHRASE = "As@12345"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [[redirects]]
   from = "/"
   to = "/dashboard"
   status = 301
+  force = true
