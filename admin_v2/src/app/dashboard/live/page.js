@@ -18,13 +18,17 @@ export default function LiveResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'candidates'), orderBy('voteCount', 'desc'));
+    // No orderBy in Firestore — sort client-side to avoid silent failure
+    // when voteCount field is missing from some documents
+    const q = query(collection(db, 'candidates'));
     const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const data = snap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
       setCandidates(data);
+      setLoading(false);
+    }, (error) => {
+      console.error('Live results error:', error);
       setLoading(false);
     });
 
@@ -34,6 +38,28 @@ export default function LiveResultsPage() {
   const totalVotes = candidates.reduce((sum, c) => sum + (c.voteCount || 0), 0);
   
   const COLORS = ['#2563eb', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--text-secondary)' }}>
+        <div className="loader"></div>
+        <p style={{ marginLeft: '16px', fontWeight: '600' }}>Synchronizing with blockchain node...</p>
+      </div>
+    );
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <div className="glass" style={{ padding: '60px', textAlign: 'center', borderRadius: '24px' }}>
+        <Activity size={48} color="var(--primary-blue)" style={{ opacity: 0.3, marginBottom: '24px' }} />
+        <h3 style={{ color: 'var(--text-secondary)' }}>No Election Data Found</h3>
+        <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '12px auto' }}>
+          It looks like no candidates have been registered in the system yet. 
+          Please add candidates in the System Config to start tracking live results.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ animation: 'fadeIn 0.6s ease-out' }}>
@@ -81,20 +107,18 @@ export default function LiveResultsPage() {
                <Award size={18} color="var(--accent-gold)" />
                Current Leader
              </h4>
-             {candidates.length > 0 && (
-                <div style={{ textAlign: 'center' }}>
-                   <img 
-                     src={candidates[0].image || 'https://via.placeholder.com/100'} 
-                     style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid var(--accent-gold)', marginBottom: '16px', objectFit: 'cover' }}
-                     alt={candidates[0].name}
-                   />
-                   <h2 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '4px' }}>{candidates[0].name}</h2>
-                   <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: '600' }}>{candidates[0].party}</p>
-                   <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '12px', color: 'var(--accent-gold)', fontWeight: '800' }}>
-                     {((candidates[0].voteCount / (totalVotes || 1)) * 100).toFixed(1)}% OF TOTAL
-                   </div>
+             <div style={{ textAlign: 'center' }}>
+                <img 
+                  src={candidates[0].image || 'https://via.placeholder.com/100'} 
+                  style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid var(--accent-gold)', marginBottom: '16px', objectFit: 'cover' }}
+                  alt={candidates[0].name}
+                />
+                <h2 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '4px' }}>{candidates[0].name}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: '600' }}>{candidates[0].party}</p>
+                <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '12px', color: 'var(--accent-gold)', fontWeight: '800' }}>
+                  {((candidates[0].voteCount / (totalVotes || 1)) * 100).toFixed(1)}% OF TOTAL
                 </div>
-             )}
+             </div>
           </div>
 
           <div className="glass" style={{ padding: '32px', borderRadius: '24px', flex: 1 }}>
@@ -106,7 +130,7 @@ export default function LiveResultsPage() {
                 {candidates.slice(0, 3).map((c, i) => (
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{c.party}</span>
-                    <span style={{ fontWeight: '700' }}>{c.voteCount}</span>
+                    <span style={{ fontWeight: '700' }}>{c.voteCount || 0}</span>
                   </div>
                 ))}
              </div>

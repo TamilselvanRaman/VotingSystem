@@ -12,7 +12,7 @@ export default function VoterDirectoryPage() {
 
   useEffect(() => {
     // Listen for Voter Total
-    const q = query(collection(db, 'realVoterList'), limit(50));
+    const q = query(collection(db, 'realVoterList'), limit(100));
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(doc => ({
         id: doc.id,
@@ -20,10 +20,22 @@ export default function VoterDirectoryPage() {
       }));
       setVoters(data);
       setLoading(false);
+    }, (error) => {
+      console.error('Voter directory error:', error);
+      setLoading(false);
     });
 
     return () => unsub();
   }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--text-secondary)' }}>
+        <div className="loader"></div>
+        <p style={{ marginLeft: '16px', fontWeight: '600' }}>Retrieving voter registry...</p>
+      </div>
+    );
+  }
 
   const filteredVoters = voters.filter(v => 
     v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
