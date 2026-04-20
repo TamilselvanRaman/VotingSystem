@@ -106,11 +106,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+    
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate: eighteenYearsAgo,
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: eighteenYearsAgo, // Cannot select a date later than 18 years ago
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -471,6 +474,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: TextField(
             controller: controller,
             enabled: enabled,
+            textCapitalization: label.contains("VOTER ID") 
+                ? TextCapitalization.characters 
+                : TextCapitalization.none,
+            inputFormatters: label.contains("VOTER ID") 
+                ? [
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      return newValue.copyWith(text: newValue.text.toUpperCase());
+                    }),
+                  ]
+                : [],
             style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppConstants.navy),
             decoration: InputDecoration(
               hintText: hint,
