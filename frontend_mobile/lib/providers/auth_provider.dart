@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import '../utils/crypto_utils.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,11 +16,13 @@ class AuthProvider with ChangeNotifier {
   String? _error;
   String? _verificationId;
   String? _sentOtp; // For testing purposes
+  String? _voteKey; // For testing purposes
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get sentOtp => _sentOtp; // Expose for UI
+  String? get voteKey => _voteKey; // Expose for UI
   bool get isAuthenticated => _user != null;
 
   AuthProvider() {
@@ -373,5 +376,35 @@ class AuthProvider with ChangeNotifier {
     await _auth.signOut();
     _user = null;
     notifyListeners();
+  }
+
+  // ============================================================
+  // [SECURE VOTE KEY LOGIC]
+  // ============================================================
+  
+  /// Generates the unique vote key and "sends" it (simulated)
+  void generateAndSendVoteKey() {
+    if (_user == null) return;
+    
+    // Import here or at top of file
+    // Using the utility we created
+    try {
+      _voteKey = CryptoUtils.generateVoteKey(
+        name: _user!.name,
+        epic: _user!.epicNumber,
+        dob: _user!.dob,
+        phone: _user!.phone,
+      );
+      debugPrint("SECURE VOTE KEY GENERATED: $_voteKey");
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error generating vote key: $e");
+    }
+  }
+
+  /// Verifies if the entered key matches the generated one
+  bool verifyVoteKey(String input) {
+    if (_voteKey == null) return false;
+    return input.toUpperCase().trim() == _voteKey;
   }
 }

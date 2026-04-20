@@ -84,7 +84,7 @@ const Header = () => {
             }}>
               <UserCircle2 color="white" size={20} />
             </div>
-            <span style={{ fontSize: '14px', fontWeight: '600' }}>Admin Selvan</span>
+            <span style={{ fontSize: '14px', fontWeight: '600' }}>Voter Admin</span>
           </div>
         </div>
       </div>
