@@ -37,9 +37,15 @@ export default function VoterDirectoryPage() {
       const votedIds = new Set();
       snap.forEach(doc => {
         const data = doc.data();
-        if (data.voterId) votedIds.add(data.voterId);
+        // Add all possible identifying fields from the vote document
+        if (data.voterId) votedIds.add(String(data.voterId).trim());
+        if (data.epicNumber) votedIds.add(String(data.epicNumber).trim());
+        votedIds.add(doc.id.trim()); 
       });
+      console.log(`Synced ${votedIds.size} unique votes`);
       setVotes(votedIds);
+    }, (err) => {
+      console.error("Votes Sync Error:", err);
     });
 
     return () => {
@@ -61,13 +67,18 @@ export default function VoterDirectoryPage() {
   const constituencies = ['All', ...new Set(voters.map(v => v.constituency).filter(Boolean))];
 
   const filteredVoters = voters.filter(v => {
-    const voterId = v.voterId || v.id;
-    const isVoted = v.hasVoted || votes.has(voterId);
+    const vId = String(v.voterId || v.id || '').trim();
+    const vEpic = String(v.epicNumber || '').trim();
+    
+    // Check against all possible identifiers
+    const isVoted = v.hasVoted === true || 
+                    votes.has(vId) || 
+                    votes.has(vEpic);
     
     const matchesSearch = 
       v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       v.epicNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      voterId?.toLowerCase().includes(searchTerm.toLowerCase());
+      vId.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesConstituency = filters.constituency === 'All' || v.constituency === filters.constituency;
     const matchesGender = filters.gender === 'All' || v.gender === filters.gender;
@@ -222,10 +233,19 @@ export default function VoterDirectoryPage() {
                   <td style={{ padding: '16px', fontWeight: '700' }}>{voter.age}</td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: (voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'var(--success)' : 'var(--warning)' }}></div>
-                      <span style={{ fontSize: '13px', fontWeight: '600', color: (voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'var(--success)' : 'var(--warning)' }}>
-                        {(voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'Voted' : 'Not Voted'}
-                      </span>
+                      {(() => {
+                        const isVoted = voter.hasVoted === true || 
+                                       votes.has(String(voter.voterId || voter.id).trim()) || 
+                                       (voter.epicNumber && votes.has(String(voter.epicNumber).trim()));
+                        return (
+                          <>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: isVoted ? 'var(--success)' : 'var(--warning)' }}></div>
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: isVoted ? 'var(--success)' : 'var(--warning)' }}>
+                              {isVoted ? 'Voted' : 'Not Voted'}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
                   </td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
@@ -307,8 +327,19 @@ export default function VoterDirectoryPage() {
                  <div>
                     <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '1px', marginBottom: '8px' }}>VOTING STATUS</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                       <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: (selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'var(--success)' : 'var(--warning)' }}></div>
-                       <p style={{ fontWeight: '600', color: (selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'var(--success)' : 'var(--warning)' }}>{(selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'Voted' : 'Not Voted'}</p>
+                      {(() => {
+                        const isVoted = selectedVoter.hasVoted === true || 
+                                       votes.has(String(selectedVoter.voterId || selectedVoter.id).trim()) || 
+                                       (selectedVoter.epicNumber && votes.has(String(selectedVoter.epicNumber).trim()));
+                        return (
+                          <>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: isVoted ? 'var(--success)' : 'var(--warning)' }}></div>
+                            <p style={{ fontWeight: '600', color: isVoted ? 'var(--success)' : 'var(--warning)' }}>
+                              {isVoted ? 'Voted' : 'Not Voted'}
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
                  </div>
 

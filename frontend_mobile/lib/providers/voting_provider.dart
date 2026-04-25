@@ -140,6 +140,7 @@ class VotingProvider with ChangeNotifier {
         transaction.set(_db.collection('votes').doc(userId), {
           'candidateId': candidateId,
           'voterId': userId,
+          'epicNumber': epicNumber,
           'timestamp': FieldValue.serverTimestamp(),
           'status': 'verified'
         });

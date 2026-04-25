@@ -52,25 +52,25 @@ export default function DashboardPage() {
         return { 
           ...prev, 
           totalVotes: votes,
-          voterTurnout: prev.totalVoters > 0 && stats.totalVoters > 0 ? ((votes / stats.totalVoters) * 100).toFixed(1) + '%' : '0%'
+          voterTurnout: prev.totalVoters > 0 ? ((votes / prev.totalVoters) * 100).toFixed(1) + '%' : '0%'
         };
       });
     });
 
     // Listen for Recent Activity
-    const qRecent = query(collection(db, 'votes'), orderBy('timestamp', 'desc'), limit(5));
+    const qRecent = query(collection(db, 'votes'), limit(10));
     const unsubRecent = onSnapshot(qRecent, (snap) => {
-      const activity = snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const activity = snap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Ensure we have a timestamp for sorting in JS if Firestore order fails
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : (data.timestamp || new Date())
+        };
+      }).sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
+      
       setRecentVotes(activity);
-    }, (err) => {
-      // If timestamp index is missing, fallback to unordered
-      console.log("Timestamp index might be missing, falling back...");
-      onSnapshot(query(collection(db, 'votes'), limit(5)), (s) => {
-        setRecentVotes(s.docs.map(d => ({ id: d.id, ...d.data() })));
-      });
     });
 
     // Listen for System Setting
