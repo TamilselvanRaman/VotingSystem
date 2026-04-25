@@ -40,38 +40,25 @@ graph TD
 - **Google Fonts**: Professional typography
 - **Material Icons**: Rich UI
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
-- Node.js (20.x recommended)
-- Flutter SDK
-- Firebase CLI
-- Java (for Android development)
-- **ADB Tools** (For wireless debugging)
+## 🚀 Developer Quick Start Flow
 
-### Installation
+To run the entire system on your laptop right now, follow these steps in order using two separate terminals:
 
-1.  **Clone the repository**
-    ```bash
-    git clone <repository-url>
-    cd VotingSystem
-    ```
+### Terminal 1: Admin Dashboard (Web)
+1.  **Navigate**: `cd admin_v2`
+2.  **Install**: `npm install`
+3.  **Run**: `npm run dev`
+4.  **Open**: [http://localhost:3000](http://localhost:3000)
 
-2.  **Backend Setup**
-    ```bash
-    cd admin_v2
-    npm install
-    ```
-
-3.  **Configure Firebase**
-    - Ensure `firebase.json` points to your project
-    - Create a `.env.local` file with your Firebase credentials.
-
-4.  **Frontend Setup**
-    ```bash
-    cd ../frontend_mobile
-    flutter pub get
-    ```
+### Terminal 2: Mobile App & Mirroring
+1.  **Connect phone** via USB.
+2.  **Enable Wireless**: `adb tcpip 5555`
+3.  **Start Mirroring**: `scrcpy` (A window pops up with your phone screen).
+4.  **Navigate**: `cd ../frontend_mobile`
+5.  **Install**: `flutter pub get`
+6.  **Run**: `flutter run`
 
 ---
 
@@ -95,29 +82,6 @@ graph TD
 
 ---
 
-## 🏗️ Step-by-Step Run Guide
-
-If you are setting up the project for the first time, follow these steps in order:
-
-### 1. Running the Admin Dashboard (Web)
-1.  **Navigate to directory**: `cd admin_v2`
-2.  **Install Dependencies**: Run `npm install` (Wait for it to finish).
-3.  **Launch App**: Run `npm run dev`.
-4.  **Access**: Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 2. Running the Mobile Application (Flutter)
-1.  **Navigate to directory**: `cd frontend_mobile`
-2.  **Install Dependencies**: Run `flutter pub get`.
-3.  **Check Device**: Run `flutter devices` to ensure your phone/emulator is detected.
-4.  **Launch App**: Run `flutter run`.
-
-### 3. Generating the App for Users (APK)
-1.  **Navigate to directory**: `cd frontend_mobile`
-2.  **Build**: Run `flutter build apk --release`.
-3.  **Locate File**: Your APK will be at `build/app/outputs/flutter-apk/app-release.apk`.
-
----
-
 ## 📱 Running Mobile App Without USB (Wireless Debugging)
 
 To run the Flutter app on your physical phone without being tethered by a USB cable, follow these steps:
@@ -129,29 +93,39 @@ To run the Flutter app on your physical phone without being tethered by a USB ca
     ```bash
     adb tcpip 5555
     ```
-    *Note: If `adb` is not recognized, use the full path to your platform-tools folder (e.g., `C:\Users\Name\AppData\Local\Android\Sdk\platform-tools\adb.exe`).*
 
 ### 2. Connect Wirelessly
 1.  Disconnect the USB cable.
-2.  Find your phone's **IP Address**:
-    - Go to **Settings** > **About Phone** > **Status** (or Network) > **IP Address**.
-    - It usually looks like `192.168.1.XX`.
+2.  Find your phone's **IP Address** (Settings > About Phone > Status > IP Address).
 3.  In your PC terminal, run:
     ```bash
     adb connect <YOUR_PHONE_IP>:5555
     ```
-4.  Verify connection:
-    ```bash
-    adb devices
-    ```
-    You should see your device IP listed as "device".
 
-### 3. Run the App
-Now you can simply run:
+### 3. Run mirroring & App
 ```bash
+scrcpy
 cd frontend_mobile
 flutter run
 ```
+
+---
+
+## 🖥️ Screen Mirroring (Scrcpy)
+
+To see and control your mobile screen on your laptop while debugging, I recommend using **Scrcpy**.
+
+### How to use:
+1.  **Open a new terminal**.
+2.  Ensure your phone is connected (via USB or Wireless ADB).
+3.  Run the command:
+    ```bash
+    scrcpy
+    ```
+
+> [!TIP]
+> If the `scrcpy` command is not recognized, use the full path: 
+> `C:\Users\TAMILSELVAN RAMAN\AppData\Local\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v3.3.4\scrcpy.exe`
 
 ---
 
@@ -171,24 +145,3 @@ The interface for the citizens. The workflow is:
 - **PIN Setup**: Users set a 4-digit secure PIN for their session.
 - **Secure Voting**: Voters select a candidate. Before submission, they must enter their PIN to authorize the cryptographic vote casting.
 - **Confirmation**: A success screen is shown, and the voter's status is updated to "Voted" in real-time across the system.
-
-### 3. Backend Strategy
-## 🖥️ Screen Mirroring (Scrcpy)
-
-To see and control your mobile screen on your laptop while debugging, I recommend using **Scrcpy**. It has already been installed on your system.
-
-### How to use:
-1.  **Open a new terminal** (to recognize the `scrcpy` command).
-2.  Ensure your phone is connected (via USB or Wireless ADB).
-3.  Run the command:
-    ```bash
-    scrcpy
-    ```
-4.  **Advanced Options**:
-    - **Record Screen**: `scrcpy --record=file.mp4`
-    - **No Audio**: `scrcpy --no-audio`
-    - **Limit Resolution**: `scrcpy -m 1024` (Faster performance over Wi-Fi)
-
-> [!TIP]
-> If the `scrcpy` command is not recognized yet, restart your terminal or use the full path: 
-> `C:\Users\TAMILSELVAN RAMAN\AppData\Local\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v3.3.4\scrcpy.exe`
