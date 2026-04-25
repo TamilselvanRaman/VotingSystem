@@ -173,5 +173,22 @@ The interface for the citizens. The workflow is:
 - **Confirmation**: A success screen is shown, and the voter's status is updated to "Voted" in real-time across the system.
 
 ### 3. Backend Strategy
-- **Firebase Firestore**: Acts as a real-time bridge between the Admin and Mobile app. No manual refresh is needed to see new votes.
-- **Security Rules**: Firestore rules ensure that a voter can only cast one vote and cannot modify other voters' data.
+## 🖥️ Screen Mirroring (Scrcpy)
+
+To see and control your mobile screen on your laptop while debugging, I recommend using **Scrcpy**. It has already been installed on your system.
+
+### How to use:
+1.  **Open a new terminal** (to recognize the `scrcpy` command).
+2.  Ensure your phone is connected (via USB or Wireless ADB).
+3.  Run the command:
+    ```bash
+    scrcpy
+    ```
+4.  **Advanced Options**:
+    - **Record Screen**: `scrcpy --record=file.mp4`
+    - **No Audio**: `scrcpy --no-audio`
+    - **Limit Resolution**: `scrcpy -m 1024` (Faster performance over Wi-Fi)
+
+> [!TIP]
+> If the `scrcpy` command is not recognized yet, restart your terminal or use the full path: 
+> `C:\Users\TAMILSELVAN RAMAN\AppData\Local\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v3.3.4\scrcpy.exe`
