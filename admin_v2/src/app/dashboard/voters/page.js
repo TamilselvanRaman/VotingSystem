@@ -6,6 +6,7 @@ import { Search, Filter, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function VoterDirectoryPage() {
   const [voters, setVoters] = useState([]);
+  const [votes, setVotes] = useState(new Set()); // Store voterIds who have voted
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -17,9 +18,9 @@ export default function VoterDirectoryPage() {
   const [selectedVoter, setSelectedVoter] = useState(null);
 
   useEffect(() => {
-    // Listen for Voter Total
-    const q = query(collection(db, 'realVoterList'), limit(100));
-    const unsub = onSnapshot(q, (snap) => {
+    // 1. Listen for Voter List
+    const qVoters = query(collection(db, 'realVoterList'), limit(1000));
+    const unsubVoters = onSnapshot(qVoters, (snap) => {
       const data = snap.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -31,7 +32,20 @@ export default function VoterDirectoryPage() {
       setLoading(false);
     });
 
-    return () => unsub();
+    // 2. Listen for Votes collection for real-time status
+    const unsubVotes = onSnapshot(collection(db, 'votes'), (snap) => {
+      const votedIds = new Set();
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.voterId) votedIds.add(data.voterId);
+      });
+      setVotes(votedIds);
+    });
+
+    return () => {
+      unsubVoters();
+      unsubVotes();
+    };
   }, []);
 
   if (loading) {
@@ -47,15 +61,18 @@ export default function VoterDirectoryPage() {
   const constituencies = ['All', ...new Set(voters.map(v => v.constituency).filter(Boolean))];
 
   const filteredVoters = voters.filter(v => {
+    const voterId = v.voterId || v.id;
+    const isVoted = v.hasVoted || votes.has(voterId);
+    
     const matchesSearch = 
       v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       v.epicNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.voterId?.toLowerCase().includes(searchTerm.toLowerCase());
+      voterId?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesConstituency = filters.constituency === 'All' || v.constituency === filters.constituency;
     const matchesGender = filters.gender === 'All' || v.gender === filters.gender;
     const matchesStatus = filters.status === 'All' || 
-      (filters.status === 'Voted' ? v.hasVoted : !v.hasVoted);
+      (filters.status === 'Voted' ? isVoted : !isVoted);
 
     return matchesSearch && matchesConstituency && matchesGender && matchesStatus;
   });
@@ -205,9 +222,9 @@ export default function VoterDirectoryPage() {
                   <td style={{ padding: '16px', fontWeight: '700' }}>{voter.age}</td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: voter.hasVoted ? 'var(--success)' : 'var(--warning)' }}></div>
-                      <span style={{ fontSize: '13px', fontWeight: '600', color: voter.hasVoted ? 'var(--success)' : 'var(--warning)' }}>
-                        {voter.hasVoted ? 'Voted' : 'Not Voted'}
+                      <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: (voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'var(--success)' : 'var(--warning)' }}></div>
+                      <span style={{ fontSize: '13px', fontWeight: '600', color: (voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'var(--success)' : 'var(--warning)' }}>
+                        {(voter.hasVoted || votes.has(voter.voterId || voter.id)) ? 'Voted' : 'Not Voted'}
                       </span>
                     </div>
                   </td>
@@ -290,8 +307,8 @@ export default function VoterDirectoryPage() {
                  <div>
                     <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '1px', marginBottom: '8px' }}>VOTING STATUS</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                       <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: selectedVoter.hasVoted ? 'var(--success)' : 'var(--warning)' }}></div>
-                       <p style={{ fontWeight: '600', color: selectedVoter.hasVoted ? 'var(--success)' : 'var(--warning)' }}>{selectedVoter.hasVoted ? 'Voted' : 'Not Voted'}</p>
+                       <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: (selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'var(--success)' : 'var(--warning)' }}></div>
+                       <p style={{ fontWeight: '600', color: (selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'var(--success)' : 'var(--warning)' }}>{(selectedVoter.hasVoted || votes.has(selectedVoter.voterId || selectedVoter.id)) ? 'Voted' : 'Not Voted'}</p>
                     </div>
                  </div>
 

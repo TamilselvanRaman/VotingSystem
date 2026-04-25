@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, query, orderBy, limit } from 'firebase/firestore';
 import { 
   Users, 
   Vote, 
@@ -19,19 +19,28 @@ export default function DashboardPage() {
     isVotingOpen: false,
     startTime: null,
     endTime: null,
-    voterTurnout: '0%'
+    voterTurnout: '0%',
+    pollingStations: 0
   });
+  const [recentVotes, setRecentVotes] = useState([]);
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
     // Listen for Voter Total
     const unsubVoters = onSnapshot(collection(db, 'realVoterList'), (snap) => {
+      const uniqueConstituencies = new Set();
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.constituency) uniqueConstituencies.add(data.constituency);
+      });
+      
       setStats(prev => {
-        const total = snap.size || 1232;
+        const total = snap.size || 0;
         return { 
           ...prev, 
           totalVoters: total,
-          voterTurnout: prev.totalVotes > 0 ? ((prev.totalVotes / total) * 100).toFixed(1) + '%' : '0%'
+          pollingStations: uniqueConstituencies.size || 0,
+          voterTurnout: prev.totalVotes > 0 && total > 0 ? ((prev.totalVotes / total) * 100).toFixed(1) + '%' : '0%'
         };
       });
     });
@@ -43,8 +52,24 @@ export default function DashboardPage() {
         return { 
           ...prev, 
           totalVotes: votes,
-          voterTurnout: prev.totalVoters > 0 ? ((votes / prev.totalVoters) * 100).toFixed(1) + '%' : '0%'
+          voterTurnout: prev.totalVoters > 0 && stats.totalVoters > 0 ? ((votes / stats.totalVoters) * 100).toFixed(1) + '%' : '0%'
         };
+      });
+    });
+
+    // Listen for Recent Activity
+    const qRecent = query(collection(db, 'votes'), orderBy('timestamp', 'desc'), limit(5));
+    const unsubRecent = onSnapshot(qRecent, (snap) => {
+      const activity = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRecentVotes(activity);
+    }, (err) => {
+      // If timestamp index is missing, fallback to unordered
+      console.log("Timestamp index might be missing, falling back...");
+      onSnapshot(query(collection(db, 'votes'), limit(5)), (s) => {
+        setRecentVotes(s.docs.map(d => ({ id: d.id, ...d.data() })));
       });
     });
 
@@ -79,6 +104,7 @@ export default function DashboardPage() {
       unsubVoters();
       unsubVotes();
       unsubStatus();
+      unsubRecent();
       clearInterval(timer);
     };
   }, [stats.startTime, stats.endTime]);
@@ -145,7 +171,7 @@ export default function DashboardPage() {
         />
         <StatCard 
           title="POLLING STATIONS" 
-          value="42" 
+          value={stats.pollingStations.toString()} 
           icon={<MapPin />} 
           color="#f59e0b" 
         />
@@ -158,9 +184,37 @@ export default function DashboardPage() {
             <Activity size={20} color="var(--primary-blue)" />
             Real-time Activity Stream
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-             <Clock size={40} opacity={0.3} />
-             <p>Awaiting live connection to regional polling nodes...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+             {recentVotes.length > 0 ? (
+               recentVotes.map((vote, i) => (
+                 <div key={vote.id} style={{ 
+                   display: 'flex', 
+                   justifyContent: 'space-between', 
+                   alignItems: 'center',
+                   padding: '12px',
+                   background: 'rgba(255,255,255,0.03)',
+                   borderRadius: '12px',
+                   animation: `slideIn 0.3s ease-out ${i * 0.1}s forwards`,
+                   opacity: 0
+                 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }}></div>
+                     <div>
+                       <p style={{ fontSize: '14px', fontWeight: '700' }}>New Vote Registered</p>
+                       <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>ID: ...{vote.id.slice(-6)}</p>
+                     </div>
+                   </div>
+                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                     {vote.timestamp?.toDate ? vote.timestamp.toDate().toLocaleTimeString() : 'Just now'}
+                   </span>
+                 </div>
+               ))
+             ) : (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center', alignItems: 'center', height: '200px', color: 'var(--text-secondary)' }}>
+                  <Clock size={40} opacity={0.3} />
+                  <p>Awaiting live connection to regional polling nodes...</p>
+               </div>
+             )}
           </div>
         </div>
 
