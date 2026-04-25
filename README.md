@@ -73,6 +73,8 @@ graph TD
     flutter pub get
     ```
 
+---
+
 ## 💻 Available Commands
 
 ### Admin Web (Next.js)
@@ -90,6 +92,29 @@ graph TD
 | `flutter run` | **Debug Run**: Compiles the app and installs it on your connected device/emulator. Supports "Hot Reload" (press `r`). |
 | `flutter build apk` | **Release Build**: Generates a standalone `.apk` file located in `build/app/outputs/flutter-apk/`. This is the file you share with users. |
 | `flutter pub get` | **Dependency Sync**: Downloads all libraries and packages listed in `pubspec.yaml`. |
+
+---
+
+## 🏗️ Step-by-Step Run Guide
+
+If you are setting up the project for the first time, follow these steps in order:
+
+### 1. Running the Admin Dashboard (Web)
+1.  **Navigate to directory**: `cd admin_v2`
+2.  **Install Dependencies**: Run `npm install` (Wait for it to finish).
+3.  **Launch App**: Run `npm run dev`.
+4.  **Access**: Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 2. Running the Mobile Application (Flutter)
+1.  **Navigate to directory**: `cd frontend_mobile`
+2.  **Install Dependencies**: Run `flutter pub get`.
+3.  **Check Device**: Run `flutter devices` to ensure your phone/emulator is detected.
+4.  **Launch App**: Run `flutter run`.
+
+### 3. Generating the App for Users (APK)
+1.  **Navigate to directory**: `cd frontend_mobile`
+2.  **Build**: Run `flutter build apk --release`.
+3.  **Locate File**: Your APK will be at `build/app/outputs/flutter-apk/app-release.apk`.
 
 ---
 
