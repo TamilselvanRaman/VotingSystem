@@ -62,6 +62,15 @@ To run the entire system on your laptop right now, open **two separate terminal 
 5.  **Install**: `flutter pub get`
 6.  **Run**: `flutter run`
 
+
+# 1. Enable Wireless Mode
+& "C:\Users\TAMILSELVAN RAMAN\AppData\Local\Android\Sdk\platform-tools\adb.exe" tcpip 5555
+# 2. Start Mirroring
+& "C:\Users\TAMILSELVAN RAMAN\AppData\Local\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v3.3.4\scrcpy.exe"
+# 3. Run the App
+cd "s:\Project\Voting System\frontend_mobile"
+flutter run
+
 ---
 
 ## 💻 Available Commands Reference
@@ -148,3 +157,10 @@ The interface for the citizens. The workflow is:
 - **PIN Setup**: Users set a 4-digit secure PIN for their session.
 - **Secure Voting**: Voters select a candidate. Before submission, they must enter their PIN to authorize the cryptographic vote casting.
 - **Confirmation**: A success screen is shown, and the voter's status is updated to "Voted" in real-time across the system.
+
+
+
+& "C:\Users\TAMILSELVAN RAMAN\AppData\Local\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v3.3.4\scrcpy.exe"
+
+
+flutter run -d 1bd897d0

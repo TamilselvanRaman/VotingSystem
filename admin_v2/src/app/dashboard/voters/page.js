@@ -14,6 +14,7 @@ export default function VoterDirectoryPage() {
     gender: 'All',
     status: 'All'
   });
+  const [selectedVoter, setSelectedVoter] = useState(null);
 
   useEffect(() => {
     // Listen for Voter Total
