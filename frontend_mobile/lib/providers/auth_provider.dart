@@ -226,6 +226,7 @@ class AuthProvider with ChangeNotifier {
     required String voterId,
     required String phone,
     required String dob,
+    required String pin,
     required Map<String, dynamic> officialData,
   }) async {
     _isLoading = true;
@@ -254,6 +255,7 @@ class AuthProvider with ChangeNotifier {
         'constituency': officialData['constituency'] ?? "",
         'pollingStation': officialData['pollingStation'] ?? "",
         'hasVoted': false,
+        'pin': pin,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -329,6 +331,31 @@ class AuthProvider with ChangeNotifier {
       }
 
       final data = query.docs.first.data();
+      
+      // Strict Validation
+      final officialDob = data['dateOfBirth']; // Format: YYYY-MM-DD
+      final officialPhone = data['phone'];
+      
+      // Normalize input DOB for comparison
+      // Input format from RegisterScreen: "D/M/YYYY"
+      List<String> parts = dob.split('/');
+      if (parts.length == 3) {
+        String day = parts[0].padLeft(2, '0');
+        String month = parts[1].padLeft(2, '0');
+        String year = parts[2];
+        String normalizedInputDob = "$year-$month-$day";
+        
+        if (officialDob != normalizedInputDob) {
+          _error = "Date of Birth does not match records.";
+          return null;
+        }
+      }
+      
+      if (officialPhone != phone) {
+        _error = "Phone number does not match records.";
+        return null;
+      }
+
       return data;
     } catch (e) {
       _error = "System Error. Please try again.";
@@ -406,5 +433,60 @@ class AuthProvider with ChangeNotifier {
   bool verifyVoteKey(String input) {
     if (_voteKey == null) return false;
     return input.toUpperCase().trim() == _voteKey;
+  }
+
+  /// Verifies the 4-digit PIN for voting with a 2-attempt limit
+  Future<bool> verifyPin(String inputPin) async {
+    if (_user == null) return false;
+    if (_user!.isLocked) {
+      _error = "Account is locked due to too many failed PIN attempts.";
+      notifyListeners();
+      return false;
+    }
+
+    final isCorrect = _user!.pin == inputPin;
+
+    if (isCorrect) {
+      // Reset failed attempts on success
+      if (_user!.failedPinAttempts > 0) {
+        await _updateLockoutStatus(0, false);
+      }
+      return true;
+    } else {
+      // Increment failed attempts
+      final newAttempts = _user!.failedPinAttempts + 1;
+      final shouldLock = newAttempts >= 2;
+      
+      await _updateLockoutStatus(newAttempts, shouldLock);
+      
+      if (shouldLock) {
+        _error = "Account locked after 2 failed attempts.";
+      } else {
+        _error = "Incorrect PIN. 1 attempt remaining.";
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> _updateLockoutStatus(int attempts, bool locked) async {
+    if (_user == null) return;
+    
+    try {
+      final uid = _user!.id;
+      await _db.collection('users').doc(uid).update({
+        'failedPinAttempts': attempts,
+        'isLocked': locked,
+      });
+
+      // Update local state
+      final updatedData = Map<String, dynamic>.from(_user!.toJson());
+      updatedData['failedPinAttempts'] = attempts;
+      updatedData['isLocked'] = locked;
+      _user = UserModel.fromJson(updatedData);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error updating lockout status: $e");
+    }
   }
 }

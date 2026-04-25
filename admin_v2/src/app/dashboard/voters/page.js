@@ -8,7 +8,12 @@ export default function VoterDirectoryPage() {
   const [voters, setVoters] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectedVoter, setSelectedVoter] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    constituency: 'All',
+    gender: 'All',
+    status: 'All'
+  });
 
   useEffect(() => {
     // Listen for Voter Total
@@ -37,11 +42,22 @@ export default function VoterDirectoryPage() {
     );
   }
 
-  const filteredVoters = voters.filter(v => 
-    v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    v.epicNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.voterId?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique constituencies for filter options
+  const constituencies = ['All', ...new Set(voters.map(v => v.constituency).filter(Boolean))];
+
+  const filteredVoters = voters.filter(v => {
+    const matchesSearch = 
+      v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      v.epicNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.voterId?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesConstituency = filters.constituency === 'All' || v.constituency === filters.constituency;
+    const matchesGender = filters.gender === 'All' || v.gender === filters.gender;
+    const matchesStatus = filters.status === 'All' || 
+      (filters.status === 'Voted' ? v.hasVoted : !v.hasVoted);
+
+    return matchesSearch && matchesConstituency && matchesGender && matchesStatus;
+  });
 
   return (
     <div style={{ animation: 'fadeIn 0.6s ease-out' }}>
@@ -71,21 +87,81 @@ export default function VoterDirectoryPage() {
                   }}
                 />
              </div>
-             <button style={{
-               padding: '12px 20px',
-               borderRadius: '12px',
-               border: '1px solid var(--glass-border)',
-               background: 'var(--navy-surface)',
-               color: 'white',
-               display: 'flex',
-               alignItems: 'center',
-               gap: '10px',
-               cursor: 'pointer'
-             }}>
-               <Filter size={16} /> Filters
+             <button 
+               onClick={() => setShowFilters(!showFilters)}
+               style={{
+                 padding: '12px 20px',
+                 borderRadius: '12px',
+                 border: `1px solid ${showFilters ? 'var(--primary-blue)' : 'var(--glass-border)'}`,
+                 background: showFilters ? 'rgba(37, 99, 235, 0.1)' : 'var(--navy-surface)',
+                 color: 'white',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '10px',
+                 cursor: 'pointer',
+                 transition: 'all 0.3s'
+               }}
+             >
+               <Filter size={16} color={showFilters ? 'var(--primary-blue)' : 'white'} /> Filters
              </button>
           </div>
         </div>
+
+        {showFilters && (
+          <div className="glass" style={{ 
+            marginBottom: '32px', 
+            padding: '24px', 
+            borderRadius: '16px', 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '20px',
+            animation: 'fadeIn 0.3s ease-out'
+          }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '1px' }}>CONSTITUENCY</label>
+              <select 
+                value={filters.constituency}
+                onChange={(e) => setFilters({...filters, constituency: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--navy-deep)', border: '1px solid var(--navy-border)', color: 'white' }}
+              >
+                {constituencies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '1px' }}>GENDER</label>
+              <select 
+                value={filters.gender}
+                onChange={(e) => setFilters({...filters, gender: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--navy-deep)', border: '1px solid var(--navy-border)', color: 'white' }}
+              >
+                <option value="All">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '1px' }}>VOTING STATUS</label>
+              <select 
+                value={filters.status}
+                onChange={(e) => setFilters({...filters, status: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--navy-deep)', border: '1px solid var(--navy-border)', color: 'white' }}
+              >
+                <option value="All">All Status</option>
+                <option value="Voted">Already Voted</option>
+                <option value="Not Voted">Pending</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <button 
+                onClick={() => setFilters({constituency: 'All', gender: 'All', status: 'All'})}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Clear All Filters
+              </button>
+            </div>
+          </div>
+        )}
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

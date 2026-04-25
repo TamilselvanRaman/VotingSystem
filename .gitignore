@@ -9,3 +9,5 @@ users.json
 # Ignore Mac OS / Windows files
 .DS_Store
 Thumbs.db
+
+voting_system_*.txt

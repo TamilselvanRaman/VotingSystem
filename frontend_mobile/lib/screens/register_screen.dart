@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _dobController = TextEditingController();
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
+  final _pinController = TextEditingController();
   bool _otpSent = false;
 
   // Validation States
@@ -44,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _dobController.dispose();
     _phoneController.dispose();
     _otpController.dispose();
+    _pinController.dispose();
     super.dispose();
   }
 
@@ -181,6 +183,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
+    final pin = _pinController.text.trim();
+    if (pin.length != 4) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please set a 4-digit PIN")));
+      return;
+    }
+    
     // First verify OTP
     final otpSuccess = await auth.verifyOtp(_otpController.text.trim());
     if (!otpSuccess) {
@@ -193,6 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       voterId: _voterIdController.text.trim(),
       phone: _phoneController.text.trim(),
       dob: _dobController.text.trim(),
+      pin: pin,
       officialData: _officialData!,
     );
 
@@ -352,6 +361,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildSimpleInput("••••••", _otpController, Icons.security_rounded, isOtp: true),
+                const SizedBox(height: 24),
+
+                FadeInLeft(
+                  duration: const Duration(milliseconds: 600),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "SET 4-DIGIT PIN",
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          color: const Color(0xFF2563EB),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSimpleInput("0000", _pinController, Icons.pin_rounded, isPin: true),
+                      const SizedBox(height: 8),
+                      Text(
+                        "This PIN will be required every time you vote.",
+                        style: GoogleFonts.inter(
+                          color: AppConstants.textLight,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
               ],
               
@@ -565,7 +604,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildSimpleInput(String hint, TextEditingController controller, IconData icon, {bool isOtp = false}) {
+  Widget _buildSimpleInput(String hint, TextEditingController controller, IconData icon, {bool isOtp = false, bool isPin = false}) {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -578,8 +617,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isOtp,
-        style: GoogleFonts.inter(fontWeight: isOtp ? FontWeight.w800 : FontWeight.w600, letterSpacing: isOtp ? 8 : 0),
+        obscureText: isOtp || isPin,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(isOtp ? 6 : (isPin ? 4 : 10)),
+        ],
+        style: GoogleFonts.inter(
+          fontWeight: (isOtp || isPin) ? FontWeight.w800 : FontWeight.w600, 
+          letterSpacing: (isOtp || isPin) ? 8 : 0
+        ),
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),

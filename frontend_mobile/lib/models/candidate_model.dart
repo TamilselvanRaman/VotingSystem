@@ -5,6 +5,7 @@ class CandidateModel {
   final String party;
   final String? logo;
   final String? image;
+  final String? symbolUrl;
 
   CandidateModel({
     required this.id,
@@ -13,6 +14,7 @@ class CandidateModel {
     required this.party,
     this.logo,
     this.image,
+    this.symbolUrl,
   });
 
   factory CandidateModel.fromJson(Map<String, dynamic> json, String documentId) {
@@ -23,6 +25,7 @@ class CandidateModel {
       party: json['party'] ?? '',
       logo: json['logo'],
       image: json['image'],
+      symbolUrl: json['symbolUrl'],
     );
   }
 }

@@ -15,6 +15,9 @@ class UserModel {
   final String state;
   final String pincode;
   final bool hasVoted;
+  final String pin;
+  final int failedPinAttempts;
+  final bool isLocked;
 
   UserModel({
     required this.id,
@@ -33,6 +36,9 @@ class UserModel {
     required this.state,
     required this.pincode,
     required this.hasVoted,
+    required this.pin,
+    this.failedPinAttempts = 0,
+    this.isLocked = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -53,6 +59,9 @@ class UserModel {
       state: json['state'] ?? '',
       pincode: json['pincode'] ?? '',
       hasVoted: json['hasVoted'] ?? false,
+      pin: json['pin'] ?? '',
+      failedPinAttempts: json['failedPinAttempts'] ?? 0,
+      isLocked: json['isLocked'] ?? false,
     );
   }
 
@@ -74,6 +83,9 @@ class UserModel {
       'state': state,
       'pincode': pincode,
       'hasVoted': hasVoted,
+      'pin': pin,
+      'failedPinAttempts': failedPinAttempts,
+      'isLocked': isLocked,
     };
   }
 }

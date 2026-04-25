@@ -44,6 +44,25 @@ class _VotingScreenState extends State<VotingScreen> {
       return;
     }
 
+    // Step 1: Request 4-Digit PIN
+    final pin = await _showPinDialog();
+    if (pin == null) return; // User cancelled
+
+    // Step 2: Verify PIN
+    final isPinCorrect = await auth.verifyPin(pin);
+    if (!isPinCorrect) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error ?? "Incorrect PIN. Please check and try again."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Step 3: Proceed with Voting
     final success = await Provider.of<VotingProvider>(context, listen: false)
         .submitVote(_selectedCandidateId!, userId);
 
@@ -63,6 +82,67 @@ class _VotingScreenState extends State<VotingScreen> {
         SnackBar(content: Text(error ?? "Submission failed")),
       );
     }
+  }
+
+  Future<String?> _showPinDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Column(
+          children: [
+            const Icon(Icons.lock_outline_rounded, color: AppConstants.primaryBlue, size: 40),
+            const SizedBox(height: 16),
+            Text(
+              "Security Verification",
+              style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: AppConstants.navy),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Enter your 4-digit PIN to confirm your vote.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(color: AppConstants.textSlate, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 12),
+              maxLength: 4,
+              decoration: InputDecoration(
+                counterText: "",
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("CANCEL", style: GoogleFonts.inter(color: AppConstants.textSlate, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.navy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text("CONFIRM VOTE", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -167,25 +247,58 @@ class _VotingScreenState extends State<VotingScreen> {
                           ),
                           child: Row(
                             children: [
-                              // Candidate Image
-                              Container(
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
-                                    width: 2,
+                              // Candidate Image & Symbol
+                              Stack(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(40),
+                                      child: Image.network(
+                                        candidate.image ?? "https://via.placeholder.com/150",
+                                        width: 72,
+                                        height: 72,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(40),
-                                  child: Image.network(
-                                    candidate.image ?? "https://via.placeholder.com/150",
-                                    width: 64,
-                                    height: 64,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+                                  if (candidate.symbolUrl != null)
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.1),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            )
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.network(
+                                            candidate.symbolUrl!,
+                                            width: 28,
+                                            height: 28,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(width: 20),
                               
@@ -203,21 +316,46 @@ class _VotingScreenState extends State<VotingScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFF2563EB).withOpacity(0.1) : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        candidate.party.toUpperCase(),
-                                        style: GoogleFonts.inter(
-                                          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.1,
+                                    Row(
+                                      children: [
+                                        if (candidate.logo != null) ...[
+                                          Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                                            ),
+                                            child: Image.network(
+                                              candidate.logo!,
+                                              width: 28,
+                                              height: 28,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                        ],
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: isSelected ? const Color(0xFF2563EB).withOpacity(0.1) : const Color(0xFFF1F5F9),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              candidate.party.toUpperCase(),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.inter(
+                                                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: 1.1,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
                                   ],
                                 ),
