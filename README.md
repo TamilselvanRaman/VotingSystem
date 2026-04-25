@@ -44,43 +44,46 @@ graph TD
 
 ## 🚀 Developer Quick Start Flow
 
-To run the entire system on your laptop right now, follow these steps in order using two separate terminals:
+To run the entire system on your laptop right now, open **two separate terminal windows** and follow these paths:
 
-### Terminal 1: Admin Dashboard (Web)
+### 🖥️ Path A: Admin Dashboard (Web)
+*Run this to manage voters and see live election results.*
 1.  **Navigate**: `cd admin_v2`
 2.  **Install**: `npm install`
-3.  **Run**: `npm run dev`
+3.  **Launch**: `npm run dev`
 4.  **Open**: [http://localhost:3000](http://localhost:3000)
 
-### Terminal 2: Mobile App & Mirroring
-1.  **Connect phone** via USB.
+### 📱 Path B: Mobile App & Mirroring (Voter)
+*Run this to see your phone on your laptop and test the voting app.*
+1.  **Connect**: Plug your phone into your laptop via USB.
 2.  **Enable Wireless**: `adb tcpip 5555`
-3.  **Start Mirroring**: `scrcpy` (A window pops up with your phone screen).
-4.  **Navigate**: `cd ../frontend_mobile`
+3.  **Start Mirroring**: `scrcpy` (Your phone screen will pop up on your laptop!)
+4.  **Navigate**: `cd frontend_mobile`
 5.  **Install**: `flutter pub get`
 6.  **Run**: `flutter run`
 
 ---
 
-## 💻 Available Commands
+## 💻 Available Commands Reference
+
+If you need to run specific commands individually, use this glossary:
 
 ### Admin Web (Next.js)
 
 | Command | Explanation |
 | :--- | :--- |
-| `npm run dev` | **Development Mode**: Starts the local server at `http://localhost:3000`. Changes in code are reflected instantly (Hot Reload). |
-| `npm run build` | **Production Build**: Compiles and optimizes the application for deployment. This creates a `.next` folder with minimized assets. |
-| `npm start` | **Production Run**: Starts the server using the compiled build. This is faster and more stable than dev mode. |
+| `npm run dev` | **Development Mode**: Starts the local server with Hot Reload. |
+| `npm run build` | **Production Build**: Optimizes the app for deployment. |
+| `npm start` | **Production Run**: Starts the server using the compiled build. |
 
 ### Mobile App (Flutter)
 
 | Command | Explanation |
 | :--- | :--- |
-| `flutter run` | **Debug Run**: Compiles the app and installs it on your connected device/emulator. Supports "Hot Reload" (press `r`). |
-| `flutter build apk` | **Release Build**: Generates a standalone `.apk` file located in `build/app/outputs/flutter-apk/`. This is the file you share with users. |
-| `flutter pub get` | **Dependency Sync**: Downloads all libraries and packages listed in `pubspec.yaml`. |
+| `flutter run` | **Debug Run**: Installs the app on your device with Hot Reload. |
+| `flutter build apk` | **Release Build**: Generates the final `.apk` file for sharing. |
+| `flutter pub get` | **Dependency Sync**: Downloads all required libraries. |
 
----
 
 ## 📱 Running Mobile App Without USB (Wireless Debugging)
 
