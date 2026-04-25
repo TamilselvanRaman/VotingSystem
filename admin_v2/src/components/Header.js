@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Search, Bell, UserCircle2 } from 'lucide-react';
+import { Bell, UserCircle2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const Header = () => {
@@ -34,29 +34,6 @@ const Header = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-        <div style={{ position: 'relative' }}>
-          <Search 
-            style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} 
-            size={18} 
-            color="var(--text-secondary)" 
-          />
-          <input 
-            type="text" 
-            placeholder="Search Voter ID or Candidate..." 
-            style={{
-              padding: '12px 18px 12px 48px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'var(--navy-surface)',
-              color: 'var(--text-primary)',
-              width: '320px',
-              fontSize: '14px',
-              outline: 'none',
-              border: '1px solid var(--navy-border)'
-            }}
-          />
-        </div>
-
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ position: 'relative', cursor: 'pointer' }}>
             <Bell size={22} color="var(--text-secondary)" />
